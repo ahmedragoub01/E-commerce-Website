@@ -2,6 +2,7 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { connectDB } from "@/lib/mongodb";
 import Product from '@/models/Product';
+import Category from '@/models/Category';
 import mongoose from 'mongoose';
 
 export async function GET(request: NextRequest) {
@@ -13,6 +14,7 @@ export async function GET(request: NextRequest) {
         const category = searchParams.get('category');
         const isAuction = searchParams.get('isAuction');
         const sortBy = searchParams.get('sortBy');
+        const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : undefined;
         
         // Build query
         const query: { [key: string]: any } = {};
@@ -35,6 +37,11 @@ export async function GET(request: NextRequest) {
             const sortOptions: { [key: string]: 1 | -1 } = {};
             sortOptions[sortBy] = sortBy === 'price' ? 1 : -1;
             productsQuery = productsQuery.sort(sortOptions);
+        }
+        
+        // Apply limit if provided
+        if (limit) {
+            productsQuery = productsQuery.limit(limit);
         }
         
         const products = await productsQuery.exec();

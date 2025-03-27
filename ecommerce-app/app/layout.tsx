@@ -5,6 +5,7 @@ import Footer from "@/components/ui/Footer";
 import { Providers } from "./providers";
 import QueryProvider from "./providers/QueryProvider";
 import PageTransition from "@/components/PageTransition"; // Import the client component
+import { initializeServerServices } from "@/lib/serverInit";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -13,7 +14,12 @@ export const metadata = {
   description: "A fullstack e-commerce application",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  initializeServerServices();
   return (
     <html lang="en">
       <body className={inter.className}>
@@ -22,7 +28,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <div className="flex flex-col min-h-screen">
               <Navbar />
               <main className="flex-grow">
-                <PageTransition>{children}</PageTransition> 
+                <PageTransition>{children}</PageTransition>
               </main>
               <Footer />
             </div>

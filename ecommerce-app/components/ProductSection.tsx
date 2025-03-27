@@ -38,7 +38,9 @@ export default function ProductSection({
     return (
       <div className="mt-12">
         <h2 className="text-2xl font-bold mb-6">{title}</h2>
-        <p className="text-muted-foreground">{emptyMessage || "No products available."}</p>
+        <p className="text-muted-foreground">
+          {emptyMessage || "No products available."}
+        </p>
       </div>
     );
   }

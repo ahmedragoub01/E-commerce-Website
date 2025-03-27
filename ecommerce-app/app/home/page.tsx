@@ -1,164 +1,229 @@
-"use client"
+"use client";
 
-import { useState, useEffect, useMemo } from "react"
-import { useRouter } from "next/navigation"
-import { useSession } from "next-auth/react"
-import { Search } from "lucide-react"
-import { useQuery } from "@tanstack/react-query"
+import { useState, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { Search, X } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 
-import { Input } from "@/components/ui/input"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import UserHeader from "@/components/UserHeader"
-import CategoryFilter from "@/components/CategoryFilter"
-import LoadingSpinner from "@/components/LoadingSpinner"
-import ProductSection from "@/components/ProductSection"
-import ProductGrid from "@/components/ProductGrid"
+import UserHeader from "@/components/UserHeader";
+import CategoryFilter from "@/components/CategoryFilter";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import ProductSection from "@/components/ProductSection";
+import ProductGrid from "@/components/ProductGrid";
+import Pagination from "@/components/Pagination";
+import { fetchProducts, fetchCategories } from "@/lib/api";
 
-// Fonction pour récupérer les produits
-const fetchProducts = async () => {
-  const res = await fetch('/api/products')
-  return res.json()
-}
-
-// Fonction pour récupérer les catégories
-const fetchCategories = async () => {
-  const res = await fetch('/api/categories')
-  return res.json()
-}
+const ITEMS_PER_PAGE = 12;
 
 export default function Dashboard() {
-  const router = useRouter()
+  const router = useRouter();
   const { data: session, status } = useSession({
     required: true,
     onUnauthenticated() {
-      router.push("/login")
+      router.push("/login");
     },
-  })
+  });
 
-  const [searchQuery, setSearchQuery] = useState("")
-  const [activeCategory, setActiveCategory] = useState("all")
-  const [sortBy, setSortBy] = useState("newest")
-  const [priceRange, setPriceRange] = useState({ min: "", max: "" })
-  const [flashVisible, setFlashVisible] = useState(true)
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeCategory, setActiveCategory] = useState("all");
+  const [sortBy, setSortBy] = useState("newest");
+  const [priceRange, setPriceRange] = useState({ min: "", max: "" });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isMounted, setIsMounted] = useState(false);
+  const [isFilterActive, setIsFilterActive] = useState(false);
 
-  // Chargement des données avec React Query
   const { data: products = [], isLoading: loadingProducts } = useQuery({
     queryKey: ["products"],
     queryFn: fetchProducts,
-    staleTime: 1000 * 60 * 5, // Cache pendant 5 minutes
-  })
+    staleTime: 1000 * 60 * 5,
+  });
 
   const { data: categories = [], isLoading: loadingCategories } = useQuery({
     queryKey: ["categories"],
     queryFn: fetchCategories,
     staleTime: 1000 * 60 * 5,
-  })
+  });
 
-  // Récupération de l'historique depuis localStorage avec useMemo
-  const viewingHistory = useMemo(() => {
-    return JSON.parse(localStorage.getItem("viewingHistory") || "[]")
-  }, [])
-
-  // Gère le flash screen
+  // Set isMounted to true after component mounts
   useEffect(() => {
-    const timer = setTimeout(() => setFlashVisible(false), 500)
-    return () => clearTimeout(timer)
-  }, [])
+    setIsMounted(true);
+  }, []);
 
-  // Génération des sections de produits
-  const generateProductSections = (products, history) => {
-    const newest = [...products].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 8)
-    const popular = [...products].sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 8)
+  // Track filter/search state
+  useEffect(() => {
+    const filterActive =
+      searchQuery !== "" ||
+      activeCategory !== "all" ||
+      priceRange.min !== "" ||
+      priceRange.max !== "";
 
-    let recommendations = []
-    if (history.length > 0) {
-      const viewedCategories = history.map((item) => item.categoryId)
-      recommendations = products.filter((product) => product.category && viewedCategories.includes(product.category._id))
-      
-      const viewedIds = history.map((item) => item.productId)
-      recommendations = recommendations.filter((product) => !viewedIds.includes(product._id))
+    setIsFilterActive(filterActive);
+    setCurrentPage(1);
+  }, [searchQuery, activeCategory, priceRange]);
 
-      if (recommendations.length < 8) {
-        const additionalRecommendations = popular
-          .filter((product) => !recommendations.some((p) => p._id === product._id) && !viewedIds.includes(product._id))
-          .slice(0, 8 - recommendations.length)
+  // Clear all filters
+  const clearFilters = () => {
+    setSearchQuery("");
+    setActiveCategory("all");
+    setPriceRange({ min: "", max: "" });
+  };
 
-        recommendations = [...recommendations, ...additionalRecommendations]
-      }
-    } else {
-      recommendations = popular
-    }
-
-    return { newest, popular, recommendations }
-  }
-
-  const { newest, popular, recommendations } = useMemo(() => {
-    return generateProductSections(products, viewingHistory)
-  }, [products, viewingHistory])
-
-  // Appliquer les filtres et le tri
+  // Filtering logic
   const filteredProducts = useMemo(() => {
+    if (!isMounted) return [];
+
     return products
       .filter((product) => {
-        const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase())
-        const matchesCategory = activeCategory === "all" || (product.category && product.category._id === activeCategory)
-        const matchesMinPrice = priceRange.min === "" || product.price >= Number(priceRange.min)
-        const matchesMaxPrice = priceRange.max === "" || product.price <= Number(priceRange.max)
-        return matchesSearch && matchesCategory && matchesMinPrice && matchesMaxPrice
+        const matchesSearch = product.name
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase());
+        const matchesCategory =
+          activeCategory === "all" ||
+          (product.category ? product.category._id === activeCategory : false);
+        const matchesMinPrice =
+          priceRange.min === "" || product.price >= Number(priceRange.min);
+        const matchesMaxPrice =
+          priceRange.max === "" || product.price <= Number(priceRange.max);
+        return (
+          matchesSearch && matchesCategory && matchesMinPrice && matchesMaxPrice
+        );
       })
       .sort((a, b) => {
         switch (sortBy) {
           case "price-low":
-            return a.price - b.price
+            return a.price - b.price;
           case "price-high":
-            return b.price - a.price
+            return b.price - a.price;
           case "newest":
-            return new Date(b.createdAt) - new Date(a.createdAt)
+            return (
+              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            );
           default:
-            return 0
+            return 0;
         }
-      })
-  }, [products, searchQuery, activeCategory, priceRange, sortBy])
+      });
+  }, [products, searchQuery, activeCategory, priceRange, sortBy, isMounted]);
 
+  // Pagination logic
+  const paginatedProducts = useMemo(() => {
+    if (!isMounted) return [];
+
+    const firstPageIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const lastPageIndex = firstPageIndex + ITEMS_PER_PAGE;
+    return filteredProducts.slice(firstPageIndex, lastPageIndex);
+  }, [filteredProducts, currentPage, isMounted]);
+
+  const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
+
+  // Render loading state
   if (status === "loading" || loadingProducts || loadingCategories) {
-    return <LoadingSpinner />
+    return <LoadingSpinner />;
   }
 
+  // Render main content
   return (
+    <div className="container mx-auto px-4 py-6 lg:px-4 lg:py-8">
+      <UserHeader session={session} router={router} />
 
-      <div className="container px-4 py-6 md:px-6 md:py-8">
-        <UserHeader session={session} router={router} />
-
-        {/* Barre de recherche mobile */}
-        <div className="mb-4 md:hidden">
-          <div className="relative">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input type="search" placeholder="Search products..." className="w-full pl-8" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+      {/* Search and Filter Section */}
+      <div className="mb-4">
+        <div className="flex items-center gap-4">
+          <div className="relative ">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground " />
+            <Input
+              type="search"
+              placeholder="Search products..."
+              className="w-full pl-8 "
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            {isFilterActive && (
+              <button
+                onClick={clearFilters}
+                className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-destructive"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
           </div>
+          <CategoryFilter
+            categories={categories}
+            activeCategory={activeCategory}
+            setActiveCategory={setActiveCategory}
+            priceRange={priceRange}
+            setPriceRange={setPriceRange}
+          />
         </div>
-
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold">Shop Products</h1>
-          <div className="hidden md:flex items-center gap-4">
-            <div className="relative w-64">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input type="search" placeholder="Search products..." className="pl-8" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-            </div>
-            <CategoryFilter categories={categories} activeCategory={activeCategory} setActiveCategory={setActiveCategory} priceRange={priceRange} setPriceRange={setPriceRange} />
-          </div>
-        </div>
-        <ProductSection title="Recommended For You" products={recommendations} emptyMessage="We'll recommend products as you browse the store!" />
-        <Tabs defaultValue="products" className="w-full mt-12">
-          <TabsContent value="products" className="mt-6">
-            <ProductGrid products={filteredProducts} router={router} />
-          </TabsContent>
-        </Tabs>
-        <ProductSection title="New Arrivals" products={newest} emptyMessage="Check back soon for new products!" />
-        <ProductSection title="Popular Now" products={popular} emptyMessage="Our popular products are coming soon!" />
-
-
       </div>
-  )
+
+      {/* Conditional Rendering Based on Filter/Search State */}
+      {isFilterActive ? (
+        // Filtered Results View
+        <div>
+          <h2 className="text-xl font-bold mb-4">
+            {filteredProducts.length} Results
+            {searchQuery && ` for "${searchQuery}"`}
+          </h2>
+
+          <ProductGrid
+            products={paginatedProducts}
+            router={router}
+            gridClassName="grid grid-cols-2 md:grid-cols-4 gap-4"
+          />
+
+          {filteredProducts.length > ITEMS_PER_PAGE && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
+          )}
+
+          {filteredProducts.length === 0 && (
+            <p className="text-center text-muted-foreground mt-8">
+              No products found matching your search criteria.
+            </p>
+          )}
+        </div>
+      ) : (
+        // Default View with All Sections
+        <>
+          <ProductSection
+            title="Recommended For You"
+            products={products.slice(0, 8)}
+            emptyMessage="We'll recommend products as you browse the store!"
+            gridClassName="grid grid-cols-2 md:grid-cols-4 gap-4"
+          />
+
+          <Tabs defaultValue="products" className="w-full mt-12">
+            <TabsContent value="products" className="mt-6">
+              <ProductGrid
+                products={products.slice(0, ITEMS_PER_PAGE)}
+                router={router}
+                gridClassName="grid grid-cols-2 md:grid-cols-4 gap-4"
+              />
+            </TabsContent>
+          </Tabs>
+
+          <ProductSection
+            title="New Arrivals"
+            products={products.slice(8, 16)}
+            emptyMessage="Check back soon for new products!"
+            gridClassName="grid grid-cols-2 md:grid-cols-4 gap-4"
+          />
+
+          <ProductSection
+            title="Popular Now"
+            products={products.slice(16, 24)}
+            emptyMessage="Our popular products are coming soon!"
+            gridClassName="grid grid-cols-2 md:grid-cols-4 gap-4"
+          />
+        </>
+      )}
+    </div>
+  );
 }

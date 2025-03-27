@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { connectDB } from "@/lib/mongodb";
 import Auction from '@/models/Auction';
 import { NextRequest } from 'next/server';
+import mongoose from 'mongoose';
 
 export async function GET(request: NextRequest) {
     try {
@@ -10,10 +11,25 @@ export async function GET(request: NextRequest) {
         // Get query parameters
         const { searchParams } = new URL(request.url);
         const status = searchParams.get('status');
+        const search = searchParams.get('search');
         
         // Build query
-        const query: { status?: string } = {};
+        const query: any = {};
         if (status) query.status = status;
+        
+        // Add search functionality
+        if (search) {
+            const Product = mongoose.model('Product');
+            const matchingProducts = await Product.find({
+                $or: [
+                    { name: { $regex: search, $options: 'i' } },
+                    { description: { $regex: search, $options: 'i' } }
+                ]
+            }).select('_id');
+            
+            const productIds = matchingProducts.map(product => product._id);
+            query.product = { $in: productIds };
+        }
         
         const auctions = await Auction.find(query)
             .populate('product')

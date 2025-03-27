@@ -16,39 +16,46 @@ const BidSchema = new Schema({
   },
 });
 
-const AuctionSchema = new Schema({
-  product: {
-    type: Schema.Types.ObjectId,
-    ref: 'Product',
-    required: true,
+const AuctionSchema = new Schema(
+  {
+    product: {
+      type: Schema.Types.ObjectId,
+      ref: 'Product',
+      required: true,
+    },
+    startingPrice: {
+      type: Number,
+      required: true,
+    },
+    currentPrice: {
+      type: Number,
+      required: true,
+    },
+    startDate: {
+      type: Date,
+      required: true,
+    },
+    endDate: {
+      type: Date,
+      required: true,
+    },
+    bids: [BidSchema],
+    winner: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+    },
+    status: {
+      type: String,
+      enum: ['upcoming', 'active', 'ended', 'completed'],
+      default: 'upcoming',
+    },
+    isPaid: {
+      type: Boolean,
+      default: false, // Default to unpaid until the winner completes payment
+    },
   },
-  startingPrice: {
-    type: Number,
-    required: true,
-  },
-  currentPrice: {
-    type: Number,
-    required: true,
-  },
-  startDate: {
-    type: Date,
-    required: true,
-  },
-  endDate: {
-    type: Date,
-    required: true,
-  },
-  bids: [BidSchema],
-  winner: {
-    type: Schema.Types.ObjectId,
-    ref: 'User',
-  },
-  status: {
-    type: String,
-    enum: ['upcoming', 'active', 'ended', 'completed'],
-    default: 'upcoming',
-  },
-}, { timestamps: true });
+  { timestamps: true }
+);
 
 const Auction = models.Auction || mongoose.model('Auction', AuctionSchema);
 export default Auction;

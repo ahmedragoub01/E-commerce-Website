@@ -39,8 +39,8 @@ export function generateVerificationToken() {
 // Function to send verification email
 // Function to send verification email
 export async function sendVerificationEmail(user: any) {
-  // Don't generate a new token - use the one that's already set on the user
-  const verificationUrl = `http://localhost:3000/api/auth/verify?token=${user.verificationToken}`;
+// Don't generate a new token - use the one that's already set on the user
+  const verificationUrl = `http://localhost:3000/email-verification?token=${user.verificationToken}`;
 
   const html = `
     <p>Please click the link below to verify your email address:</p>

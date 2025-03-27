@@ -1,6 +1,6 @@
-import { Filter } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { Filter } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Sheet,
   SheetContent,
@@ -9,9 +9,15 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from "@/components/ui/sheet"
+} from "@/components/ui/sheet";
 
-export default function CategoryFilter({ categories, activeCategory, setActiveCategory, priceRange, setPriceRange }) {
+export default function CategoryFilter({
+  categories,
+  activeCategory,
+  setActiveCategory,
+  priceRange,
+  setPriceRange,
+}) {
   return (
     <Sheet>
       <SheetTrigger asChild>
@@ -33,17 +39,27 @@ export default function CategoryFilter({ categories, activeCategory, setActiveCa
                 variant={activeCategory === "all" ? "default" : "outline"}
                 size="sm"
                 onClick={() => setActiveCategory("all")}
-                className={activeCategory === "all" ? "bg-indigo-700 hover:bg-indigo-800" : ""}
+                className={
+                  activeCategory === "all"
+                    ? "bg-blue-600 hover:bg-blue-700"
+                    : ""
+                }
               >
                 All
               </Button>
               {categories.map((category) => (
                 <Button
                   key={category._id}
-                  variant={activeCategory === category._id ? "default" : "outline"}
+                  variant={
+                    activeCategory === category._id ? "default" : "outline"
+                  }
                   size="sm"
                   onClick={() => setActiveCategory(category._id)}
-                  className={activeCategory === category._id ? "bg-indigo-700 hover:bg-indigo-800" : ""}
+                  className={
+                    activeCategory === category._id
+                      ? "bg-blue-600 hover:bg-blue-700"
+                      : ""
+                  }
                 >
                   {category.name}
                 </Button>
@@ -54,28 +70,32 @@ export default function CategoryFilter({ categories, activeCategory, setActiveCa
           <div>
             <h3 className="mb-2 font-medium">Price Range</h3>
             <div className="grid grid-cols-2 gap-2">
-              <Input 
-                type="number" 
-                placeholder="Min" 
+              <Input
+                type="number"
+                placeholder="Min"
                 value={priceRange.min}
-                onChange={(e) => setPriceRange({...priceRange, min: e.target.value})}
+                onChange={(e) =>
+                  setPriceRange({ ...priceRange, min: e.target.value })
+                }
               />
-              <Input 
-                type="number" 
-                placeholder="Max" 
+              <Input
+                type="number"
+                placeholder="Max"
                 value={priceRange.max}
-                onChange={(e) => setPriceRange({...priceRange, max: e.target.value})}
+                onChange={(e) =>
+                  setPriceRange({ ...priceRange, max: e.target.value })
+                }
               />
             </div>
           </div>
         </div>
         <SheetFooter className="mt-6">
-          <Button 
-            className="w-full bg-indigo-700 hover:bg-indigo-800" 
+          <Button
+            className="w-full bg-blue-600 hover:bg-blue-700"
             onClick={() => {
               // Reset filters
-              setActiveCategory("all")
-              setPriceRange({ min: "", max: "" })
+              setActiveCategory("all");
+              setPriceRange({ min: "", max: "" });
             }}
           >
             Reset Filters
@@ -83,5 +103,5 @@ export default function CategoryFilter({ categories, activeCategory, setActiveCa
         </SheetFooter>
       </SheetContent>
     </Sheet>
-  )
+  );
 }

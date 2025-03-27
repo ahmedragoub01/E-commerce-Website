@@ -16,10 +16,32 @@ const UserSchema = new Schema(
       enum: ["user", "admin"],
       default: "user",
     },
-    verificationToken: String, 
-    verificationTokenExpires: Date, 
+    verificationToken: String,
+    verificationTokenExpires: Date,
     resetPasswordToken: String,
     resetPasswordExpires: Date,
+
+    // Added fields
+    isBlacklisted: {
+      type: Boolean,
+      default: false, // Default to false, will be set to true if penalized
+    },
+    cart: [
+      {
+        productId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Product", // Reference to the product model
+        },
+        auctionId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Auction", // Reference to the auction
+        },
+        addedAt: {
+          type: Date,
+          default: Date.now, // Track when the item was added
+        },
+      },
+    ],
   },
   { timestamps: true }
 );

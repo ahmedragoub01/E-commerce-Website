@@ -1,3 +1,4 @@
+"use client";
 import { motion, useAnimation } from "framer-motion";
 import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
@@ -90,7 +91,7 @@ export default function ProductCard({
             unoptimized
           />
           {showCategory && product.category && (
-            <Badge className="absolute top-2 right-2 bg-indigo-700">
+            <Badge className="absolute top-2 right-2 bg-blue-600">
               {product.category.name}
             </Badge>
           )}
@@ -98,16 +99,20 @@ export default function ProductCard({
         <CardContent className="p-4 cursor-pointer">
           <h3 className="line-clamp-1 font-medium">{product.name}</h3>
           <div className="mt-2 flex items-center justify-between">
-            <span className="font-bold text-indigo-700">${product.price.toFixed(2)}</span>
+            <span className="font-bold text-blue-600">
+              ${product.price.toFixed(2)}
+            </span>
             {product.inventory <= 0 && (
               <Badge variant="outline" className="text-red-500">
                 Out of stock
               </Badge>
             )}
           </div>
-          <div className="mt-4">
+          <div className="mt-4 flex justify-end">
+            {" "}
+            {/* Aligns button to the right */}
             <Button
-              className="cursor-pointer w-full bg-indigo-700 hover:bg-indigo-800"
+              className="bg-blue-600 hover:bg-blue-700"
               onClick={handleViewProduct}
             >
               See Details
