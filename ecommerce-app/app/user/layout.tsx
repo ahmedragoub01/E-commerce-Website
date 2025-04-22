@@ -1,9 +1,9 @@
-import "./globals.css";
+import "../globals.css";
 import { Inter } from "next/font/google";
 import Navbar from "@/components/ui/Navbar";
 import Footer from "@/components/ui/Footer";
-import { Providers } from "./providers";
-import QueryProvider from "./providers/QueryProvider";
+import { Providers } from "../providers";
+import QueryProvider from "../providers/QueryProvider";
 import PageTransition from "@/components/PageTransition"; // Import the client component
 import { initializeServerServices } from "@/lib/serverInit";
 

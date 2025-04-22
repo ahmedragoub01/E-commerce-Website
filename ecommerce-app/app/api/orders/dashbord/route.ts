@@ -1,0 +1,285 @@
+import { NextResponse } from 'next/server';
+import { connectDB } from "@/lib/mongodb";
+import Order from '@/models/Order';
+import Product from '@/models/Product';
+import User from '@/models/User';
+import mongoose from 'mongoose';
+import { NextRequest } from 'next/server';
+
+export async function GET(request: NextRequest) {
+    try {
+        await connectDB();
+        
+        // Get query parameters
+        const { searchParams } = new URL(request.url);
+        const userId = searchParams.get('userId');
+        const status = searchParams.get('status');
+        
+        // Calculate date 6 months ago
+        const sixMonthsAgo = new Date();
+        sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+        
+        // Build match query
+        const matchQuery: any = { 
+            createdAt: { $gte: sixMonthsAgo },
+            ...(userId && { user: new mongoose.Types.ObjectId(userId) }),
+            ...(status && { status: status })
+        };
+        
+        // First get the aggregated monthly data without populating
+        const ordersByMonth = await Order.aggregate([
+            { $match: matchQuery },
+            {
+                $group: {
+                    _id: {
+                        year: { $year: "$createdAt" },
+                        month: { $month: "$createdAt" }
+                    },
+                    count: { $sum: 1 },
+                    totalRevenue: { $sum: "$total" },
+                    totalDiscount: { $sum: "$discount" },
+                    orderIds: { $push: "$_id" } // Collect just the order IDs
+                }
+            },
+            { $sort: { "_id.year": 1, "_id.month": 1 } },
+            {
+                $project: {
+                    _id: 0,
+                    year: "$_id.year",
+                    month: "$_id.month",
+                    count: 1,
+                    totalRevenue: 1,
+                    totalDiscount: 1,
+                    netRevenue: { $subtract: ["$totalRevenue", "$totalDiscount"] },
+                    orderIds: 1
+                }
+            }
+        ]);
+        
+        // Get all order IDs from the aggregation
+        const allOrderIds = ordersByMonth.flatMap(month => month.orderIds);
+        
+        // Fetch and populate all orders in one query
+        const populatedOrders = await Order.find({
+            _id: { $in: allOrderIds }
+        })
+        .populate('user', 'name email')
+        .populate({
+            path: 'items.product',
+            populate: {
+                path: 'category',  // Assuming 'category' is the reference field in Product
+                select: 'name'     // Only get the name field from Category
+            }
+        });
+        
+        // Map the populated orders back to the monthly structure
+        interface MonthlyOrderData {
+            year: number;
+            month: number;
+            count: number;
+            totalRevenue: number;
+            totalDiscount: number;
+            netRevenue: number;
+            orderIds: mongoose.Types.ObjectId[];
+        }
+
+        interface PopulatedOrder {
+            _id: mongoose.Types.ObjectId;
+            user: {
+            name: string;
+            email: string;
+            };
+            items: {
+            product: any; // Replace `any` with the appropriate type if available
+            }[];
+        }
+
+        const result: Array<MonthlyOrderData & { orders: PopulatedOrder[] }> = ordersByMonth.map(month => ({
+            ...month,
+            orders: populatedOrders.filter(order => 
+            month.orderIds.some((id: { equals: (arg0: any) => any; }) => id.equals(order._id))
+            )
+        }));
+        
+        // Group orders by category and calculate the best 4 categories
+        const categoryMap: Map<string, { orders: PopulatedOrder[]; totalRevenue: number }> = new Map();
+
+
+        populatedOrders.forEach(order => {
+            order.items.forEach((item: { product: { category: { name: string; }; }; }) => {
+                const category = item.product.category.name || 'Unknown'; // Replace 'Unknown' with a default category if needed
+                if (!categoryMap.has(category)) {
+                    categoryMap.set(category, { orders: [], totalRevenue: 0 });
+                }
+                const categoryData = categoryMap.get(category)!;
+                categoryData.orders.push(order);
+                categoryData.totalRevenue += order.total;
+            });
+        });
+
+        // Sort categories by total revenue and pick the top 4
+        const sortedCategories = Array.from(categoryMap.entries())
+            .sort((a, b) => b[1].totalRevenue - a[1].totalRevenue);
+
+        const topCategories = sortedCategories.slice(0, 4);
+        const otherCategories = sortedCategories.slice(4);
+
+        // Combine the "Others" category
+        const othersCategory = {
+            category: 'Others',
+            orders: otherCategories.flatMap(([_, data]) => data.orders),
+            totalRevenue: otherCategories.reduce((sum, [_, data]) => sum + data.totalRevenue, 0)
+        };
+
+        // Prepare the final category result
+        const categoriesResult = topCategories.map(([category, data]) => ({
+            category,
+            orders: data.orders,
+            totalRevenue: data.totalRevenue
+        }));
+
+        if (othersCategory.orders.length > 0) {
+            categoriesResult.push(othersCategory);
+        }
+        // Calculate the percentage of each category
+        const totalRevenue = categoriesResult.reduce((sum, category) => sum + category.totalRevenue, 0);
+
+        const categoriesWithPercentage = categoriesResult.map(category => ({
+            label: category.category,
+            value: ((category.totalRevenue / totalRevenue) * 100).toFixed(2) // Percentage with 2 decimal places
+        }));
+
+        // Calculate the start and end of the current month
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        
+        // Aggregate top-selling products for the current month
+        const topSellingProducts = await Order.aggregate([
+            {
+                $match: {
+                    createdAt: { $gte: startOfMonth, $lte: endOfMonth }
+                }
+            },
+            { $unwind: "$items" },
+            {
+                $group: {
+                    _id: "$items.product",
+                    totalQuantity: { $sum: "$items.quantity" },
+                    totalRevenue: { $sum: { $multiply: ["$items.quantity", "$items.price"] } }
+                }
+            },
+            { $sort: { totalQuantity: -1 } },
+            { $limit: 5 }
+        ]);
+        
+        // Populate the _id (which is the Product reference) to get product details
+        const populatedTopProducts = await Product.populate(topSellingProducts, {
+            path: "_id"
+        });
+                
+        const topProductsResult = populatedTopProducts.map(product => ({
+            product: product._id.name,   
+            totalQuantity: product.totalQuantity,
+            totalRevenue: product.totalRevenue
+        }));
+
+        let ordersByCountry = await Order.aggregate([
+            { $match: matchQuery },
+            {
+                $group: {
+                    _id: "$shippingAddress.country",
+                    count: { $sum: 1 },
+                    totalRevenue: { $sum: "$total" },
+                    totalDiscount: { $sum: "$discount" },                
+                }
+            },
+            { $sort: { "_id.year": 1, "_id.month": 1 } },
+            {
+                $project: {
+                    _id: 1,
+                    count: 1,
+                    totalRevenue: 1,
+                    totalDiscount: 1,
+                }
+            },
+            {$limit: 5}
+        ]);
+        // Calculate total revenue for the current month
+        const currentMonthRevenue = result.reduce((sum, month) => {
+            if (month.year === now.getFullYear() && month.month === now.getMonth() + 1) {
+                return sum + month.totalRevenue;
+            }
+            return sum;
+        }, 0);
+
+        // Calculate total revenue for the previous month
+        const previousMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const previousMonthRevenue = result.reduce((sum, month) => {
+            if (month.year === previousMonth.getFullYear() && month.month === previousMonth.getMonth() + 1) {
+                return sum + month.totalRevenue;
+            }
+            return sum;
+        }, 0);
+
+        // Calculate growth percentage
+        const revenueGrowth = previousMonthRevenue
+            ? (((currentMonthRevenue - previousMonthRevenue) / previousMonthRevenue) * 100).toFixed(2)
+            : null;
+
+        // Add the revenue and growth to the response
+        const revenueComparison = {
+            currentMonthRevenue,
+            revenueGrowth: revenueGrowth ? `${revenueGrowth}%` : 'N/A'
+        };
+        // Calculate the number of orders for the current month
+        const currentMonthOrders = result.reduce((sum, month) => {
+            if (month.year === now.getFullYear() && month.month === now.getMonth() + 1) {
+                return sum + month.count;
+            }
+            return sum;
+        }, 0);
+
+        // Calculate the number of orders for the previous month
+        const previousMonthOrders = result.reduce((sum, month) => {
+            if (month.year === previousMonth.getFullYear() && month.month === previousMonth.getMonth() + 1) {
+                return sum + month.count;
+            }
+            return sum;
+        }, 0);
+
+        // Calculate growth percentage for orders
+        const ordersGrowth = previousMonthOrders
+            ? (((currentMonthOrders - previousMonthOrders) / previousMonthOrders) * 100).toFixed(2)
+            : null;
+
+        // Add the orders comparison to the response
+        const ordersComparison = {
+            currentMonthOrders,
+            ordersGrowth: ordersGrowth ? `${ordersGrowth}%` : 'N/A'
+        };
+
+        const numberUsersNow = await User.countDocuments();
+        // Calculate the start and end of the previous month
+        const numberUsersLastMonth = await User.countDocuments({
+            createdAt: {
+                $lte: new Date(now.getFullYear(), now.getMonth(), 1),
+            }
+        });
+        const numberUsersGrowth = numberUsersLastMonth
+            ? (((numberUsersNow - numberUsersLastMonth) / numberUsersLastMonth) * 100).toFixed(2)
+            : null;
+        const usersComparison= {
+            currentMonthUsers: numberUsersNow,
+            usersGrowth: numberUsersGrowth ? `${numberUsersGrowth}%` : 'N/A'
+        };
+        // Add the categories result to the response
+        return NextResponse.json({monthlySales:result,categoriesResult: categoriesWithPercentage, topProductsResult,ordersByCountry,revenueComparison,ordersComparison,usersComparison});
+    } catch (error:any) {
+        console.error('Error fetching orders by month:', error);
+        return NextResponse.json(
+            { error: 'Failed to fetch orders by month', details: error.message }, 
+            { status: 500 }
+        );
+    }
+}

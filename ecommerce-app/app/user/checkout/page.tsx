@@ -161,11 +161,7 @@ export default function CheckoutPage() {
       // Common order data
       const orderData = {
         userId: session.user.id,
-        items: cart.items.map((item) => ({
-          productId: item.product._id,
-          quantity: item.quantity,
-          price: item.product.price,
-        })),
+        cartId: cart._id,
         total: cart.total,
         shippingAddress: {
           street: values.street,

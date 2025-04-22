@@ -4,6 +4,8 @@ import { connectDB } from "@/lib/mongodb";
 import Product from '@/models/Product';
 import Category from '@/models/Category';
 import mongoose from 'mongoose';
+import fs, { mkdir, writeFile } from 'fs/promises';
+import path from 'path';
 
 export async function GET(request: NextRequest) {
     try {
@@ -64,13 +66,58 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Invalid category ID' }, { status: 400 });
         }
         
-        const product = new Product(body);
+        const product = new Product({
+            name: body.name,
+            description: body.description,
+            price: parseFloat(body.price),
+            inventory: parseInt(body.inventory),
+            category: body.category,
+            isAuction: body.isAuction || false,
+            images: [] // Will be populated after upload
+        });
+
         await product.save();
+
+        console.log('Product created:', body.images.length);
+        const imageUrls: string[] = [];
+        if (body.images && body.images.length > 0) {
+            const uploadDir = path.join(process.cwd(), 'public', 'Products', product._id.toString());
+            
+            try {
+              await mkdir(uploadDir, { recursive: true});
+              
+              for (const [index, base64Image] of body.images.entries()) {
+                // Extract the base64 data
+                const matches = base64Image.match(/^data:([A-Za-z-+/]+);base64,(.+)$/);
+                if (!matches || matches.length !== 3) {
+                  continue; // Skip invalid images
+                }
+                
+                const fileExtension = matches[1].split('/')[1];
+                const buffer = Buffer.from(matches[2], 'base64');
+                const filename = `${Date.now()}-${index}.${fileExtension}`;
+                const filePath = path.join(uploadDir, filename);
+                
+                await writeFile(filePath, buffer);
+                imageUrls.push(`${product._id}/${filename}`);
+              }
+              
+              // Update product with image URLs
+              product.images = imageUrls;
+              await product.save();
+            } catch (uploadError) {
+                // If upload fails, delete the product
+                await Product.findByIdAndDelete(product._id);
+                throw uploadError;
+            }
+        }
+        
         
         // Return the product with populated category
         const savedProduct = await Product.findById(product._id).populate('category');
         
         return NextResponse.json(savedProduct, { status: 201 });
+
     } catch (error) {
         console.error('Error creating product:', error);
         return NextResponse.json({ error: 'Failed to create product' }, { status: 500 });

@@ -15,7 +15,7 @@ export async function GET(request: NextRequest, { params }: Params) {
     try {
         await connectDB();
         
-        const { id } = params;
+        const { id } = await params;
         if (!ObjectId.isValid(id)) {
             return NextResponse.json({ error: 'Invalid order ID' }, { status: 400 });
         }
@@ -39,7 +39,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
     try {
         await connectDB();
         
-        const { id } = params;
+        const { id } = await params;
         if (!ObjectId.isValid(id)) {
             return NextResponse.json({ error: 'Invalid order ID' }, { status: 400 });
         }

@@ -11,7 +11,7 @@ export async function GET(request: NextRequest, { params }: { params: Params }) 
     try {
         await connectDB();
         
-        const { id } = params;
+        const { id } = await params;
         const product = await Product.findById(id).populate('category');
         
         if (!product) {
@@ -28,7 +28,7 @@ export async function PUT(request: NextRequest, { params }: { params: Params }) 
     try {
         await connectDB();
         
-        const { id } = params;
+        const { id } = await params;
         const body = await request.json();
         
         const product = await Product.findByIdAndUpdate(
@@ -52,7 +52,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Params 
     try {
         await connectDB();
         
-        const { id } = params;
+        const { id } = await params;
         const product = await Product.findByIdAndDelete(id);
         
         if (!product) {
