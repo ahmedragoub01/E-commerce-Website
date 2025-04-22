@@ -34,6 +34,26 @@ export default function AuctionsPage() {
 
     fetchAuctions()
   }, [])
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this auction?")) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/auctions/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete auction");
+      }
+
+      setAuctions((prevAuctions) => prevAuctions.filter((auction) => auction._id !== id));
+      setFilteredAuctions((prevFiltered) => prevFiltered.filter((auction) => auction._id !== id));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An unknown error occurred");
+    }
+  };
 
   // Filter auctions based on the toggle state
   useEffect(() => {
@@ -98,11 +118,6 @@ export default function AuctionsPage() {
                 <TableCell>{auction.currentPrice}</TableCell>
                 <TableCell>{auction.status}</TableCell>
                 <TableCell className="flex space-x-2">
-                  <Link href={`/admin/auctions/${auction._id}`}>
-                    <Button variant="outline" size="icon">
-                      <Edit />
-                    </Button>
-                  </Link>
                   <Button variant="destructive" size="icon" onClick={() => handleDelete(auction._id)}>
                     <Trash2 />
                   </Button>

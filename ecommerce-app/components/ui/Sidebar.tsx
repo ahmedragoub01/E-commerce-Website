@@ -48,19 +48,18 @@ function Sidebar({
     { icon: <Tags size={20} />, label: "Categories", path: "/admin/categories" },
     { icon: <Box size={20} />, label: "Products", path: "/admin/products" },
     { icon: <Gavel size={20} />, label: "Auctions", path: "/admin/auctions" }, // Changed icon to Gavel
-    { icon: <Settings size={20} />, label: "Settings", path: "/settings" },
   ];
 
   const toggleSidebar = () => {
     setIsCollapsed(!isCollapsed);
   };
-
+  
   const getActiveItem = () => {
     const matchingItem = menuItems.find(item => pathname.endsWith(item.path));
-    return matchingItem?.label || "Dashboard";
+    return matchingItem?.label || activeItem;
   };
+  const [activeItem, setActiveItem] = useState("");
   
-  const [activeItem, setActiveItem] = useState(getActiveItem());
   useEffect(() => {
     setActiveItem(getActiveItem());
   }, [pathname]);
