@@ -36,7 +36,8 @@ export async function POST(request: NextRequest) {
         
         const body = await request.json();
         const { userId, cartId, shippingAddress, paymentIntentId }: { userId: string; cartId: string; shippingAddress: any; paymentIntentId: string } = body;
-        
+        console.log('Received data:', body);
+        console.log('Cart ID:',cartId);
         // Get cart items
         const cart = await Cart.findById(cartId).populate('items.product');
         

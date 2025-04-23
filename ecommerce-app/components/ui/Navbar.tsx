@@ -121,7 +121,7 @@ export default function Navbar() {
                 <SheetClose asChild>
                   <Link href="/" className="flex items-center">
                     <Image
-                      src="/logo.svg"
+                      src="/Logo.svg"
                       alt="Blue Cart Logo"
                       priority
                       width={200}
@@ -192,7 +192,7 @@ export default function Navbar() {
         <div className="flex items-center gap-2 group">
           <Link href="/" className="flex items-center">
             <Image
-              src="/logo.svg"
+              src="/Logo.svg"
               alt="Blue Cart Logo"
               width={200}
               height={47}

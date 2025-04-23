@@ -10,7 +10,7 @@ interface Params {
 export async function GET(request: NextRequest, { params }: { params: Params }) {
     try {
         await connectDB();
-        const { id } = params;
+        const { id } = await params;
         const category = await Category.findById(id);
         
         if (!category) {
@@ -27,7 +27,7 @@ export async function GET(request: NextRequest, { params }: { params: Params }) 
 export async function PUT(request: NextRequest, { params }: { params: Params }) {
     try {
         await connectDB();
-        const { id } = params;
+        const { id } = await params;
         const body = await request.json();
         
         const category = await Category.findByIdAndUpdate(
@@ -50,7 +50,7 @@ export async function PUT(request: NextRequest, { params }: { params: Params }) 
 export async function DELETE(request: NextRequest, { params }: { params: Params }) {
     try {
         await connectDB();
-        const { id } = params;
+        const { id } = await params;
         const category = await Category.findByIdAndDelete(id);
         
         if (!category) {
