@@ -65,17 +65,12 @@ function Sidebar({
   const toggleSidebar = () => {
     setIsCollapsed(!isCollapsed);
   };
-  
+
   const getActiveItem = () => {
-    const matchingItem = menuItems.find(item => pathname.endsWith(item.path));
-    return matchingItem?.label || activeItem;
     const matchingItem = menuItems.find((item) => pathname.endsWith(item.path));
-    return matchingItem?.label || "Dashboard";
+    return matchingItem?.label || activeItem;
   };
   const [activeItem, setActiveItem] = useState("");
-  
-
-  const [activeItem, setActiveItem] = useState(getActiveItem());
   useEffect(() => {
     setActiveItem(getActiveItem());
   }, [pathname]);
