@@ -6,7 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-// import { Switch } from "@/components/ui/switch";
+import Image from "next/image";
+
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -79,9 +81,11 @@ export default function EditProductPage() {
           description: productData.description || "",
           price: productData.price.toString(),
           inventory: productData.inventory.toString(),
-          category:  productData.category || "None",
+          category: productData.category || "None",
           isAuction: productData.isAuction || false,
-          auctionEndDate: productData.auctionEndDate ? new Date(productData.auctionEndDate) : new Date(),
+          auctionEndDate: productData.auctionEndDate
+            ? new Date(productData.auctionEndDate)
+            : new Date(),
           currentBid: productData.currentBid?.toString() || "",
           images: productData.images || [],
         });
@@ -97,7 +101,9 @@ export default function EditProductPage() {
     fetchData();
   }, [id]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
@@ -181,7 +187,7 @@ export default function EditProductPage() {
 
   const handleDelete = async () => {
     if (!confirm("Are you sure you want to delete this product?")) return;
-    
+
     try {
       const response = await fetch(`/api/products/${id}`, {
         method: "DELETE",
@@ -322,11 +328,14 @@ export default function EditProductPage() {
           <div className="space-y-4">
             <h2 className="text-lg font-semibold">Auction Settings</h2>
             <div className="flex items-center space-x-2">
-              {/* <Switch
+              <Switch
+              
                 id="isAuction"
                 checked={formData.isAuction}
-                onCheckedChange={(checked) => handleSwitchChange("isAuction", checked)}
-              /> */}
+                onCheckedChange={(checked) =>
+                  handleSwitchChange("isAuction", checked)
+                }
+              />
               <Label htmlFor="isAuction">Enable Auction</Label>
             </div>
 
@@ -375,18 +384,22 @@ export default function EditProductPage() {
                 <div className="grid grid-cols-3 gap-2">
                   {formData.images.map((image, index) => (
                     <div key={index} className="relative group">
-                      <img
-                        src={image}
+                      <Image
+                        src={`/Products/${image}`}
                         alt={`Preview ${index + 1}`}
                         className="rounded-md h-24 w-full object-cover"
+                        unoptimized
+                        width={100}
+                        height={100}
                       />
-                      <button
+
+                      <Button
                         type="button"
                         className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                         onClick={() => removeImage(index)}
                       >
                         <Trash2 className="h-3 w-3" />
-                      </button>
+                      </Button>
                     </div>
                   ))}
                 </div>

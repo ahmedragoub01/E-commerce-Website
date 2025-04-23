@@ -9,7 +9,7 @@ export default function CreateAuctionPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Form state
   const [formData, setFormData] = useState({
     productId: "",
@@ -21,7 +21,7 @@ export default function CreateAuctionPage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
@@ -29,7 +29,7 @@ export default function CreateAuctionPage() {
 
   const handleSelectProduct = () => {
     // Store current form data in session storage before redirecting
-    sessionStorage.setItem('auctionFormData', JSON.stringify(formData));
+    sessionStorage.setItem("auctionFormData", JSON.stringify(formData));
     router.push("/admin/auctions/select-product");
   };
 
@@ -40,7 +40,12 @@ export default function CreateAuctionPage() {
 
     try {
       // Validate form data
-      if (!formData.productId || !formData.startingPrice || !formData.startDate || !formData.endDate) {
+      if (
+        !formData.productId ||
+        !formData.startingPrice ||
+        !formData.startDate ||
+        !formData.endDate
+      ) {
         throw new Error("All fields are required");
       }
 
@@ -70,7 +75,9 @@ export default function CreateAuctionPage() {
       alert("Auction created successfully");
       router.push("/admin/auctions");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An unknown error occurred");
+      setError(
+        err instanceof Error ? err.message : "An unknown error occurred"
+      );
       alert(err instanceof Error ? err.message : "Failed to create auction");
     } finally {
       setLoading(false);
@@ -79,10 +86,10 @@ export default function CreateAuctionPage() {
 
   // Load any previously saved form data
   useState(() => {
-    const savedData = sessionStorage.getItem('auctionFormData');
+    const savedData = sessionStorage.getItem("auctionFormData");
     if (savedData) {
       setFormData(JSON.parse(savedData));
-      sessionStorage.removeItem('auctionFormData');
+      sessionStorage.removeItem("auctionFormData");
     }
   }, []);
 
@@ -108,12 +115,17 @@ export default function CreateAuctionPage() {
             <div className="flex items-center gap-2">
               {formData.productId ? (
                 <>
-                  <span className="text-sm font-medium">{formData.productName}</span>
-                  <span className="text-sm text-gray-500">(ID: {formData.productId})</span>
+                  <span className="text-sm font-medium">
+                    {formData.productName}
+                  </span>
+                  <span className="text-sm text-gray-500">
+                    (ID: {formData.productId})
+                  </span>
                 </>
               ) : (
-                <Button 
-                  type="button" 
+                <Button
+                  className="bg-blue-600 text-white hover:bg-blue-700"
+                  type="button"
                   variant="outline"
                   onClick={handleSelectProduct}
                 >
@@ -164,7 +176,11 @@ export default function CreateAuctionPage() {
         </div>
 
         <div className="flex justify-end">
-          <Button type="submit" disabled={loading || !formData.productId}>
+          <Button
+            className="bg-blue-600 text-white hover:bg-blue-700"
+            type="submit"
+            disabled={loading || !formData.productId}
+          >
             {loading ? "Creating..." : "Create Auction"}
           </Button>
         </div>

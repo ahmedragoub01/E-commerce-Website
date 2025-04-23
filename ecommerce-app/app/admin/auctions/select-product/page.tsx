@@ -21,7 +21,9 @@ export default function SelectProductPage() {
         const data = await response.json();
         setProducts(data);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "An unknown error occurred");
+        setError(
+          err instanceof Error ? err.message : "An unknown error occurred"
+        );
       } finally {
         setLoading(false);
       }
@@ -32,26 +34,27 @@ export default function SelectProductPage() {
 
   const handleSelectProduct = (product: any) => {
     // Get the saved form data
-    const savedData = sessionStorage.getItem('auctionFormData');
+    const savedData = sessionStorage.getItem("auctionFormData");
     const formData = savedData ? JSON.parse(savedData) : {};
-    
+
     // Update with selected product
     const updatedData = {
       ...formData,
       productId: product._id,
       productName: product.name,
     };
-    
+
     // Save back to session storage just in case
-    sessionStorage.setItem('auctionFormData', JSON.stringify(updatedData));
-    
+    sessionStorage.setItem("auctionFormData", JSON.stringify(updatedData));
+
     // Redirect back to create auction page
     router.back();
   };
 
-  const filteredProducts = products.filter(product =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product._id.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredProducts = products.filter(
+    (product) =>
+      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product._id.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -82,6 +85,7 @@ export default function SelectProductPage() {
               <h3 className="font-medium">{product.name}</h3>
               <p className="text-sm text-gray-500 mb-2">ID: {product._id}</p>
               <Button
+                className="bg-blue-600 text-white hover:bg-blue-700"
                 size="sm"
                 onClick={() => handleSelectProduct(product)}
               >

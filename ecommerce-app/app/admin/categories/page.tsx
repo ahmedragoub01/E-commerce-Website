@@ -1,5 +1,14 @@
 "use client";
-import { Table, TableBody, TableCaption, TableHeader, TableHead, TableRow, TableCell, TableFooter } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableHeader,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableFooter,
+} from "@/components/ui/table";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Edit, Trash2, Plus } from "lucide-react";
@@ -28,7 +37,9 @@ export default function CategoryPage() {
         const data = await response.json();
         setCategories(data);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "An unknown error occurred");
+        setError(
+          err instanceof Error ? err.message : "An unknown error occurred"
+        );
       } finally {
         setLoading(false);
       }
@@ -39,17 +50,19 @@ export default function CategoryPage() {
 
   const handleDelete = async (categoryId: string) => {
     if (!confirm("Are you sure you want to delete this category?")) return;
-    
+
     try {
       const response = await fetch(`/api/categories/${categoryId}`, {
         method: "DELETE",
       });
-      
+
       if (!response.ok) {
         throw new Error("Failed to delete category");
       }
-      
-      setCategories(categories.filter(category => category._id !== categoryId));
+
+      setCategories(
+        categories.filter((category) => category._id !== categoryId)
+      );
       alert("Category deleted successfully");
     } catch (err) {
       alert(err instanceof Error ? err.message : "Deletion failed");
@@ -69,7 +82,7 @@ export default function CategoryPage() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Categories Management</h1>
         <Link href="/admin/categories/new">
-          <Button>
+          <Button className="bg-blue-600 text-white hover:bg-blue-700">
             <Plus className="mr-2 h-4 w-4" />
             Add Category
           </Button>
@@ -99,13 +112,18 @@ export default function CategoryPage() {
               <TableCell className="text-right">
                 <div className="flex justify-end gap-2">
                   <Link href={`/admin/categories/edit/${category._id}`}>
-                    <Button variant="outline" size="sm">
-                      <Edit className="h-4 w-4 mr-1" />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="bg-white-400 text-yellow-400 hover:text-white hover:bg-yellow-500"
+                    >
+                      <Edit className="text-yellow h-4 w-4 mr-1" />
                       Edit
                     </Button>
                   </Link>
                   <Button
-                    variant="destructive"
+                    variant="outline"
+                    className="bg-white hover:bg-red-700 hover:text-white text-red-700"
                     size="sm"
                     onClick={() => handleDelete(category._id)}
                   >

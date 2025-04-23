@@ -353,7 +353,7 @@ export default function CheckoutPage() {
       <Button
         variant="ghost"
         size="sm"
-        className="mb-6 flex items-center gap-1 hover:text-indigo-600 transition-all duration-100"
+        className=" mb-6 flex items-center gap-1 hover:text-blue-600 transition-all duration-100"
         onClick={() => router.push("/cart")}
       >
         <ChevronLeft className="h-4 w-4" />
@@ -509,7 +509,9 @@ export default function CheckoutPage() {
                           className="grid grid-cols-2 gap-4"
                         >
                           <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="stripe" id="stripe" />
+                            <RadioGroupItem
+                            
+                             value="stripe" id="stripe" />
                             <Label
                               htmlFor="stripe"
                               className="flex items-center gap-2"
@@ -537,7 +539,7 @@ export default function CheckoutPage() {
 
                 <Button
                   type="submit"
-                  className="w-full mt-6"
+                  className="w-full mt-6 bg-blue-600 hover:bg-blue-700 text-white"
                   disabled={processing}
                 >
                   {processing

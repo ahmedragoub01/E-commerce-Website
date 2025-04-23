@@ -1,5 +1,14 @@
 "use client";
-import { Table, TableBody, TableCaption, TableHeader, TableHead, TableRow, TableCell, TableFooter } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableHeader,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableFooter,
+} from "@/components/ui/table";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Edit, Trash2, Plus } from "lucide-react";
@@ -40,17 +49,17 @@ export default function ProductPage() {
 
   const handleDelete = async (productId: string) => {
     if (!confirm("Are you sure you want to delete this product?")) return;
-    
+
     try {
       const response = await fetch(`/api/products/${productId}`, {
         method: "DELETE",
       });
-      
+
       if (!response.ok) {
         throw new Error("Failed to delete product");
       }
-      
-      setProducts(products.filter(product => product._id !== productId));
+
+      setProducts(products.filter((product) => product._id !== productId));
       alert("Product deleted successfully");
     } catch (err) {
       alert(err.message);
@@ -70,7 +79,7 @@ export default function ProductPage() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Products Management</h1>
         <Link href="/admin/products/new">
-          <Button>
+          <Button className="bg-blue-500 text-white hover:bg-blue-600">
             <Plus className="mr-2 h-4 w-4" />
             Add Product
           </Button>
@@ -102,13 +111,18 @@ export default function ProductPage() {
               <TableCell className="text-right">
                 <div className="flex justify-end gap-2">
                   <Link href={`/admin/products/edit/${product._id}`}>
-                    <Button variant="outline" size="sm">
+                    <Button
+                      className="text-yellow-500 hover:text-white hover:bg-yellow-500"
+                      variant="outline"
+                      size="sm"
+                    >
                       <Edit className="h-4 w-4 mr-1" />
                       Edit
                     </Button>
                   </Link>
                   <Button
-                    variant="destructive"
+                    className="text-red-600 hover:text-white hover:bg-red-600"
+                    variant="outline"
                     size="sm"
                     onClick={() => handleDelete(product._id)}
                   >

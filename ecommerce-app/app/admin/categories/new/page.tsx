@@ -29,7 +29,7 @@ export default function AddCategoryPage() {
     name: "",
     description: "",
     parent: "no-parent",
-    image: ""
+    image: "",
   });
 
   useEffect(() => {
@@ -47,7 +47,9 @@ export default function AddCategoryPage() {
     fetchParentCategories();
   }, []);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
@@ -59,7 +61,7 @@ export default function AddCategoryPage() {
       reader.onload = (event) => {
         setFormData({
           ...formData,
-          image: event.target?.result as string
+          image: event.target?.result as string,
         });
       };
       reader.readAsDataURL(file);
@@ -79,8 +81,8 @@ export default function AddCategoryPage() {
         body: JSON.stringify({
           name: formData.name,
           description: formData.description,
-          parent: formData.parent==="no-parent" ? null:formData.parent, 
-          image: formData.image
+          parent: formData.parent === "no-parent" ? null : formData.parent,
+          image: formData.image,
         }),
       });
 
@@ -117,7 +119,7 @@ export default function AddCategoryPage() {
           {/* Basic Information */}
           <div className="space-y-4">
             <h2 className="text-lg font-semibold">Category Details</h2>
-            
+
             <div className="space-y-2">
               <Label htmlFor="name">Category Name *</Label>
               <Input
@@ -143,8 +145,11 @@ export default function AddCategoryPage() {
             <div className="space-y-2">
               <Label htmlFor="parent">Parent Category (Optional)</Label>
               <Select
+                className="rounded-full"
                 value={formData.parent}
-                onValueChange={(value) => setFormData({ ...formData, parent: value })}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, parent: value })
+                }
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select a parent category" />
@@ -164,10 +169,11 @@ export default function AddCategoryPage() {
           {/* Image Upload */}
           <div className="space-y-4">
             <h2 className="text-lg font-semibold">Category Image</h2>
-            
+
             <div className="space-y-2">
               <Label>Upload Image</Label>
               <Input
+                className="border rounded-full text-red-600 cursor-pointer"
                 type="file"
                 accept="image/*"
                 onChange={handleImageUpload}
@@ -200,7 +206,11 @@ export default function AddCategoryPage() {
           >
             Cancel
           </Button>
-          <Button type="submit" disabled={loading}>
+          <Button
+            className="bg-blue-600 hover:bg-blue-700"
+            type="submit"
+            disabled={loading}
+          >
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {loading ? "Creating..." : "Create Category"}
           </Button>

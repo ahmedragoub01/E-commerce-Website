@@ -23,11 +23,9 @@ export default function AdminLayout({
       <body className={`${inter.className} h-full`}>
         <QueryProvider>
           <Providers>
-            <div className="flex min-h-screen bg-gray-100">
+            <div className="flex min-h-screen bg-white-100">
               <SidebarLayout children={undefined} />
-              <main className="flex-1 p-8 overflow-auto">
-                {children}
-              </main>
+              <main className="flex-1 p-8 overflow-auto">{children}</main>
             </div>
           </Providers>
         </QueryProvider>
